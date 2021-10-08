@@ -1,0 +1,56 @@
+#1. Create a persistent volume sidious-pv with 200Mi at /data/mysql on host. Use manual storageClassName and ReadWriteOnce access mode.
+#2. Create a persistent volume claim sidious-pvc and consume the pv sidious-pv.
+#3. Create a pod sidious with image mysql and mount the PVC at /var/lib/mysql using volume name sidious-vol. Set an environment variable MYSQL_ROOT_PASSWORD=my-secret-pw as well.
+
+#1
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: sidious-pv
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 200Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/data/mysql"
+EOF
+
+#2
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sidious-pvc
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 200Mi
+EOF
+
+#3
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: sidious
+  name: sidious
+spec:
+  containers:
+  - image: mysql
+    name: sidious
+    env:
+    - name: MYSQL_ROOT_PASSWORD
+      value: my-secret-pw
+    volumeMounts:
+    - mountPath: "/var/lib/mysql"
+      name: sidious-vol
+  volumes:
+    - name: sidious-vol
+      persistentVolumeClaim:
+        claimName: sidious-pvc
+EOF
